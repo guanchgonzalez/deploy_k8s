@@ -1,0 +1,69 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrant box image
+VAGRANT_BOX = {{ vagrant_box }}
+
+# VM infra parameters
+MASTERS_CPU = {{ masters_cpu }}
+MASTERS_MEM = {{ masters_mem }}
+WORKERS_CPU = {{ workers_cpu }}
+WORKERS_MEM = {{ workers_mem }}
+VM_PREFIX = {{ vm_prefix }}
+
+# Number of master and worker nodes
+MASTER_NODES = {{ master_nodes }}
+WORKER_NODES = {{ worker_nodes }}
+
+# Network IP parameters
+DOMAIN = {{ domain }}
+SUBNET = {{ subnet }}
+MASTERS_IP_BASE = {{ masters_ip_base }}
+WORKERS_IP_BASE = {{ workers_ip_base }}
+MASTERS_FWD_PORTS_BASE = {{ masters_fwd_ports_base }}
+WORKERS_FWD_PORTS_BASE = {{ workers_fwd_ports_base }}
+SETUP_HOSTS_PATH = {{ setup_hosts_path }}
+ANSIBLE_SSH_PUBKEY = {{ lookup('file', '~/.ssh/id_ed25519.pub') }}
+
+# Configuration
+Vagrant.configure("2") do |config|
+
+  # Common configuration:
+  config.vm.box = "#{VAGRANT_BOX}"
+ 
+  # Provision Master Nodes
+  (1..MASTER_NODES).each do |i|
+    n = i > 9 ? "#{i}" : "0#{i}"
+    config.vm.define "#{VM_PREFIX}master#{n}" do |master|
+      master.vm.provider "virtualbox" do |vb|
+        vb.name = "#{VM_PREFIX}master#{n}"
+        vb.memory = "#{MASTERS_MEM}"
+        vb.cpus = "#{MASTERS_CPU}"
+      end
+      master.vm.network :private_network, ip: "#{SUBNET}#{MASTERS_IP_BASE + i}"
+      master.vm.network "forwarded_port", guest: 22, host: "#{MASTERS_FWD_PORTS_BASE + i}"
+      master.vm.hostname = "#{VM_PREFIX}master#{n}.#{DOMAIN}"
+    end
+  end
+
+  # Provision Worker Nodes
+  (1..WORKER_NODES).each do |i|
+    n = i > 9 ? "#{i}" : "0#{i}"
+    config.vm.define "#{VM_PREFIX}node#{n}" do |worker|
+      worker.vm.provider "virtualbox" do |vb|
+        vb.name = "#{VM_PREFIX}node#{n}"
+        vb.memory = "#{WORKERS_MEM}"
+        vb.cpus = "#{WORKERS_CPU}"
+      end
+      worker.vm.network :private_network, ip: "#{SUBNET}#{WORKERS_IP_BASE + i}"
+      worker.vm.network "forwarded_port", guest: 22, host: "#{WORKERS_FWD_PORTS_BASE + i}"
+      worker.vm.hostname = "#{VM_PREFIX}node#{n}.#{DOMAIN}"
+    end
+  end
+
+  # Common provision:
+  config.vm.provision "setup_hosts", :type => "shell", :path => "#{SETUP_HOSTS_PATH}" do |s|
+    s.args = ["#{SUBNET}", "#{ANSIBLE_SSH_PUBKEY}"]
+  end
+
+end

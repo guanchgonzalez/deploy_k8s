@@ -1,0 +1,15 @@
+#
+#   Vagrant deployment tasks when no IaaS is available
+#
+# Target hosts: local
+#
+
+
+- name: Generate Vagrantfile from template
+  ansible.builtin.template:
+    src: "Vagrantfile.j2"
+    dest: "roles/vagrant/files/Vagrantfile"
+
+- name: Execute Vagrantfile
+  ansible.builtin.command: vagrant up
+

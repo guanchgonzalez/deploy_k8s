@@ -1,0 +1,87 @@
+#
+#   Initial tasks for every VM
+#
+# Target hosts: master, worker
+#
+
+
+- name: Check availability of VM's
+  ansible.builtin.copy:
+    content: "  VM created and operated by EAVE.\n"
+    dest: /etc/motd
+  become: true
+
+- name: Include the DNF update role
+  include_role:
+    name: packages
+  vars:
+    packages:
+    - name: wget
+
+- name: Enabling ServerAliveInterval and ServerAliveCountMax in SSH service as CLIENT
+  block:
+    - name: Check if ServerAlive parameters are enable
+      ansible.builtin.shell: grep -e AliveInterval -e AliveCountMax /etc/ssh/ssh_config | grep -v '#'
+  rescue:
+    - name: Enable Host tag
+      ansible.builtin.shell: sed -i "s/# Host.*$/Host \*/" /etc/ssh/ssh_config
+
+    - name: Enable ServerAlive parameters
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/ssh_config
+        insertafter: '^Host *'
+        line: "{{ item }}"
+      with_items:
+        - '  ServerAliveInterval=20'
+        - '  ServerAliveCountMax=360'
+  become: true
+
+- name: Enabling ClientAliveInterval and ClientAliveCountMax in SSH service as SERVER
+  block:
+    - name: Check if ClientAlive parameters are enable
+      ansible.builtin.shell: grep -e AliveInterval -e AliveCountMax /etc/ssh/sshd_config | grep -v '#'
+  rescue:
+    - name: Enable ClientAlive parameters
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: '^UsePAM yes'
+        line: "{{ item }}"
+      with_items:
+        - 'ClientAliveInterval=20'
+        - 'ClientAliveCountMax=360'
+  always:
+    - name: Restart SSH service
+      ansible.builtin.systemd_service:
+        name: sshd
+        state: restarted
+        enabled: true
+  become: true
+
+- name: Disable IPv6 with sysctl
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: '1'
+    state: present
+    sysctl_set: true
+    reload: true
+  with_items:
+  - net.ipv6.conf.all.disable_ipv6
+  - net.ipv6.conf.default.disable_ipv6
+  - net.ipv6.conf.lo.disable_ipv6
+
+- name: Disable firewalld service
+  ansible.builtin.systemd_service:
+    name: firewalld
+    state: stopped
+    enabled: false
+
+- name: Disable SElinux
+  ansible.posix.selinux:
+    state: disabled
+  register: reboot_required
+
+- name: Reboot the VM
+  ansible.builtin.reboot:
+  when: reboot_required.reboot_required
+  ignore_errors: true
+

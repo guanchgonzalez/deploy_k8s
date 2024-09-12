@@ -1,0 +1,23 @@
+#
+#   YUM packages tasks (to be included into other role plays)
+#
+# Target hosts: N/A
+# Vars: every RPM needed by the parent role
+#
+
+
+- name: Update all OS packages
+  ansible.builtin.dnf:
+    name: '*'
+    state: latest
+    update_cache: true
+
+- name: Install per parent role additional packages
+  ansible.builtin.dnf:
+    name: "{{ item.pkg }}"
+    state: latest
+  with_items: "{{ packages }}"
+
+- name: Dnf autoremove
+  ansible.builtin.dnf:
+    autoremove: true
