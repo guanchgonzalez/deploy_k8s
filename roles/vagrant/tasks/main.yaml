@@ -5,11 +5,26 @@
 #
 
 
+- name: Create deployment dir
+  ansible.builtin.file:
+    path: "{{ VAGRANT_ENV_HOME }}"
+    state: "directory"
+
 - name: Generate Vagrantfile from template
   ansible.builtin.template:
     src: "Vagrantfile.j2"
-    dest: "roles/vagrant/files/Vagrantfile"
+    dest: "{{ VAGRANT_ENV_HOME }}/Vagrantfile"
+
+- name: Copy provision shell-script into vagrant environment
+  ansible.builtin.template:
+    src: "setup_hosts.sh.j2"
+    dest: "{{ VAGRANT_ENV_HOME }}/setup_hosts.sh"
+
+- name: Debugging breakpoint
+  fail:
 
 - name: Execute Vagrantfile
-  ansible.builtin.command: vagrant up
+  ansible.builtin.command:
+    cmd: "vagrant up"
+    chdir: "{{ VAGRANT_ENV_HOME }}"
 

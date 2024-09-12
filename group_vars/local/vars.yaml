@@ -5,18 +5,19 @@
 
 # VM layer vars
 
-vagrant_box: "generic/rhel8"
-masters_cpu: 2
-masters_mem: 2048
-workers_cpu: 2
-workers_mem: 2048
-vm_prefix: "eave"
-master_nodes: 1
-worker_nodes: 2
-domain: "wallai-iter"
-subnet: "192.168.56."
-masters_ip_base: 1
-workers_ip_base: 100
-masters_fwd_ports_base: 2710
-workers_fwd_ports_base: 2720
-setup_hosts_path: "./roles/vagrant/files/setup_hosts.sh"
+VAGRANT_BOX: "generic/rhel8"
+MASTERS_CPU: 2
+MASTERS_MEM: 2048
+WORKERS_CPU: 2
+WORKERS_MEM: 2048
+VM_PREFIX: "eave"
+MASTER_NODES: 1
+WORKER_NODES: 2
+DOMAIN: "wallai-iter"
+SUBNET: "192.168.56."
+MASTERS_IP_BASE: 1
+WORKERS_IP_BASE: 100
+MASTERS_FWD_PORT_BASE: 2710
+WORKERS_FWD_PORT_BASE: 2720
+VAGRANT_ENV_HOME: "~/vagrant_deployment"
+

@@ -1,0 +1,12 @@
+#
+#   Main playbook to deploy all the Wall-AI ITER infrastructure locally via Vagrant
+#
+
+
+- hosts: local
+  gather_facts: false
+  roles:
+  - role: vagrant
+
+- import_playbook: "site_common.yaml"
+

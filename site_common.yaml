@@ -3,32 +3,27 @@
 #
 
 
-- hosts: local
-  gather_facts: false
-  roles:
-  - role: vagrant
-
-- hosts: masters:workers
+- hosts: masters, workers
   gather_facts: false
   roles:
   - role: base
 
-# - hosts: master:node
+# - hosts: masters, workers
 #   gather_facts: false
 #   roles:
 #   - role: k8s_cluster
 # 
-# - hosts: node
+# - hosts: workers
 #   gather_facts: false
 #   roles:
 #   - role: k8s_kafka
 # 
-# - hosts: node
+# - hosts: workers
 #   gather_facts: false
 #   roles:
 #   - role: k8s_mongodb
 # 
-# - hosts: node
+# - hosts: workers
 #   gather_facts: false
 #   roles:
 #   - role: k8s_apps

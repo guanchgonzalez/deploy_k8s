@@ -2,28 +2,28 @@
 # vi: set ft=ruby :
 
 # Vagrant box image
-VAGRANT_BOX = {{ vagrant_box }}
+VAGRANT_BOX = "{{ VAGRANT_BOX }}"
 
 # VM infra parameters
-MASTERS_CPU = {{ masters_cpu }}
-MASTERS_MEM = {{ masters_mem }}
-WORKERS_CPU = {{ workers_cpu }}
-WORKERS_MEM = {{ workers_mem }}
-VM_PREFIX = {{ vm_prefix }}
+MASTERS_CPU = {{ MASTERS_CPU }}
+MASTERS_MEM = {{ MASTERS_MEM }}
+WORKERS_CPU = {{ WORKERS_CPU }}
+WORKERS_MEM = {{ WORKERS_MEM }}
+VM_PREFIX = "{{ VM_PREFIX }}"
 
 # Number of master and worker nodes
-MASTER_NODES = {{ master_nodes }}
-WORKER_NODES = {{ worker_nodes }}
+MASTER_NODES = {{ MASTER_NODES }}
+WORKER_NODES = {{ WORKER_NODES }}
 
 # Network IP parameters
-DOMAIN = {{ domain }}
-SUBNET = {{ subnet }}
-MASTERS_IP_BASE = {{ masters_ip_base }}
-WORKERS_IP_BASE = {{ workers_ip_base }}
-MASTERS_FWD_PORTS_BASE = {{ masters_fwd_ports_base }}
-WORKERS_FWD_PORTS_BASE = {{ workers_fwd_ports_base }}
-SETUP_HOSTS_PATH = {{ setup_hosts_path }}
-ANSIBLE_SSH_PUBKEY = {{ lookup('file', '~/.ssh/id_ed25519.pub') }}
+DOMAIN = "{{ DOMAIN }}"
+SUBNET = "{{ SUBNET }}"
+MASTERS_IP_BASE = {{ MASTERS_IP_BASE }}
+WORKERS_IP_BASE = {{ WORKERS_IP_BASE }}
+MASTERS_FWD_PORTS_BASE = {{ MASTERS_FWD_PORT_BASE }}
+WORKERS_FWD_PORTS_BASE = {{ WORKERS_FWD_PORT_BASE }}
+SETUP_HOSTS_PATH = "{{ VAGRANT_ENV_HOME }}/setup_hosts.sh"
+ANSIBLE_SSH_PUBKEY = "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
 
 # Configuration
 Vagrant.configure("2") do |config|
