@@ -18,3 +18,4 @@ Session.vim
 *.json
 .vagrant
 vault_pass
+site.yaml
