@@ -2,7 +2,7 @@
 
 <h1><b>Deployment of a Kubernetes cluster with Ansible</b></h1>
 
-<p>There are two ways to deploy: for <u>development and testing</u> purposes on a local environment, the <b>Vagrant + VirtualBox</b> choice; for <u>production</u> purposes, the VM's will be delivered by an <b>external IaaS</b> provider and the Ansible playbook will implement the task from this point.</p>
+<p>There are two ways to deploy: for <b>development and testing</b> purposes on a local environment, the <b>Vagrant + VirtualBox</b> choice; for <b>production</b> purposes, the VM's will be delivered by an <b>external IaaS</b> provider and the Ansible playbook will implement the task from this point.</p>
 
 <h3><b>Prerequisites for a Vagrant deployment with local VM's of a Kubernetes cluster</b></h3>
 
