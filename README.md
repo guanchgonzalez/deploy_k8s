@@ -2,12 +2,13 @@
 
 <h1><b>Deployment of a Kubernetes cluster with Ansible</b></h1>
 
-<p>There are two ways to deploy: for development and testing purposes on a local environment, the Vagrant + VirtualBox choice; for production purposes, the VM's will be delivered by an external IaaS provider and the Ansible playbook will implement the task from this point.</p>
+<p>There are two ways to deploy: for <u>development and testing</u> purposes on a local environment, the <b>Vagrant + VirtualBox</b> choice; for <u>production</u> purposes, the VM's will be delivered by an <b>external IaaS</b> provider and the Ansible playbook will implement the task from this point.</p>
 
 <h3><b>Prerequisites for a Vagrant deployment with local VM's of a Kubernetes cluster</b></h3>
 
 <p>Instructions based on this documentation:</p>
-<a href="https://developer.hashicorp.com/vagrant/tutorials/getting-started/getting-started-index" title="Vagrant documentation">How to install and deploy Vagrant VMs</a>
+
+<p><a href="https://developer.hashicorp.com/vagrant/tutorials/getting-started/getting-started-index" title="Vagrant documentation">How to install and deploy Vagrant VMs</a></p>
 
 <p>Execute these shell commands in your Fedora or RedHat based host machine (notebook) with <b><i>root</i></b> user.</p>
 
@@ -40,7 +41,7 @@ dnf -y install vagrant</code></pre>
 
 </ol>
 
-<h3><b>Common installation and execution tasks:</b></h3>
+<h3><b>Common installation and execution tasks</b></h3>
 
 <p>Execute these shell commands in your Fedora or RedHat based host machine (notebook) with <b><i>root</i></b> user.</p>
 
@@ -70,7 +71,7 @@ dnf -y install vagrant</code></pre>
     </div>
   </li>
 
-  <li> Create a soft link of the proper main playbook: <i>site_vagrant.yaml</i> for the local deployment or <i>site_iaas.yaml</i> for the IaaS deployment.
+<li> Create a soft link of the proper main playbook: <b><i>site_vagrant.yaml</i></b> for the local deployment or <b><i>site_iaas.yaml</i></b> for the IaaS deployment.
     <div style="margin:10px;padding:10px;background-color:#f4f4f4;font-family: 'Courier New', Courier, monospace">
       <pre><code class="language-shell">cd deploy_k8s
 ln -s [site_vagrant.yaml|site_iaas.yaml] site.yaml</code></pre>
