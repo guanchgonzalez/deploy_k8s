@@ -1,8 +1,9 @@
 #
-#   YUM packages tasks (to be included into other role plays)
+#   DNF packages tasks (to be included into other role plays)
 #
-# Target hosts: N/A
-# Vars: every RPM needed by the parent role
+# Target hosts: inherited from the parent role
+# Vars:
+#   packages (list): every RPM needed by the parent role
 #
 
 
@@ -21,3 +22,4 @@
 - name: Dnf autoremove
   ansible.builtin.dnf:
     autoremove: true
+

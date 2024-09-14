@@ -10,21 +10,44 @@
     path: "{{ VAGRANT_ENV_HOME }}"
     state: "directory"
 
+- name: Destroy previous VM's
+  ansible.builtin.command:
+    cmd: "vagrant destroy -f"
+    chdir: "{{ VAGRANT_ENV_HOME }}"
+
 - name: Generate Vagrantfile from template
   ansible.builtin.template:
     src: "Vagrantfile.j2"
     dest: "{{ VAGRANT_ENV_HOME }}/Vagrantfile"
 
-- name: Copy provision shell-script into vagrant environment
-  ansible.builtin.template:
-    src: "setup_hosts.sh.j2"
-    dest: "{{ VAGRANT_ENV_HOME }}/setup_hosts.sh"
+# - name: Copy provision shell-script into vagrant environment
+#    ansible.builtin.template:
+#     src: "setup_hosts.sh.j2"
+#     dest: "{{ VAGRANT_ENV_HOME }}/setup_hosts.sh"
+#
+# - name: Debugging breakpoint
+#   fail:
 
-- name: Debugging breakpoint
-  fail:
+- name: Import box image
+  block:
+  - name: Check if the box is already downloaded
+    ansible.builtin.command:
+      cmd: "vagrant box list | grep '{{ VAGRANT_BOX }}'"
+      chdir: "{{ VAGRANT_ENV_HOME }}"
+  rescue:
+  - name: Download the box image
+    ansible.builtin.command:
+      cmd: "vagrant box add --provider virtualbox {{ VAGRANT_BOX }}"
+      chdir: "{{ VAGRANT_ENV_HOME }}"
 
 - name: Execute Vagrantfile
   ansible.builtin.command:
     cmd: "vagrant up"
     chdir: "{{ VAGRANT_ENV_HOME }}"
+
+- name: Remove previous known_hosts entries
+  ansible.builtin.lineinfile:
+    path: "~/.ssh/known_hosts"
+    regexp: '^.*{{ DOMAIN }}.*$'
+    state: absent
 
