@@ -51,3 +51,24 @@
     regexp: '^.*{{ DOMAIN }}.*$'
     state: absent
 
+- name: Remove previous hosts entries
+  become: true
+  ansible.builtin.lineinfile:
+    path: "/etc/hosts"
+    regexp: '^.*{{ DOMAIN }}.*$'
+    state: absent
+
+- name: Insert master entries into hosts file
+  become: true
+  ansible.builtin.lineinfile:
+    path: "/etc/hosts"
+    line: "{{ SUBNET }}{{ MASTERS_IP_BASE + item }} {{ VM_PREFIX }}master{{ ( item < 10 ) | ternary('0', '') }}{{ item }}.{{ DOMAIN }}"
+  loop: "{{ range(1, MASTER_NODES + 1) | list }}"
+
+- name: Insert worker entries into hosts file
+  become: true
+  ansible.builtin.lineinfile:
+    path: "/etc/hosts"
+    line: "{{ SUBNET }}{{ WORKERS_IP_BASE + item }} {{ VM_PREFIX }}node{{ ( item < 10 ) | ternary('0', '') }}{{ item }}.{{ DOMAIN }}"
+  loop: "{{ range(1, WORKER_NODES + 1) | list }}"
+

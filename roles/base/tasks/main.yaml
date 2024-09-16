@@ -13,6 +13,11 @@
     packages:
     - pkg: wget
 
+- name: Debug. Show hostvars.inventory_hostname
+  ansible.builtin.debug:
+    # var: hostvars[inventory_hostname]
+    var: vars
+
 - name: Enabling parameters in SSH service as CLIENT
   become: true
   ansible.builtin.lineinfile:
@@ -53,8 +58,8 @@
   - name: Set hostname with private IP in /etc/hosts
     ansible.builtin.replace:
       path: "/etc/hosts"
-      regexp: '^.*{{ ansible_hostname }}.*'
-      replace: '{{ ansible_vboxnet0.ipv4.address}}\t{{ ansible_hostname }} {{ ansible_hostname }}.local'
+      regexp: '^.*{{ ansible_nodename }}.*'
+      replace: '{{ ansible_eth1.ipv4.address}}\t{{ ansible_nodename }} {{ ansible_nodename }}.local'
 
   - name: Set Google DNS servers
     ansible.builtin.blockinfile:

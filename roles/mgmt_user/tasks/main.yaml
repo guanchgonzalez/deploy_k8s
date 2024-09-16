@@ -15,12 +15,21 @@
 - name: Create ansible user
   become: true
   ansible.builtin.user:
-    name: "{{ ansible_remote_user }}"
+    name: "ansible"
     umask: "002"
     append: true
     groups: "wheel"
     ssh_key_type: "ssh-ed25519"
     generate_ssh_key: true
+
+- name: Set management user passwordless
+  become: true
+  ansible.builtin.lineinfile:
+    dest: "/etc/sudoers"
+    state: present
+    regexp: '^%wheel'
+    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
 
 # - name: Get ansible user public key from management server
 #   delegate_to: localhost
@@ -39,10 +48,10 @@
 - name: Set up authorized_keys file on every managed node
   become: true
   ansible.builtin.copy:
-    owner: "{{ ansible_user_id }}"
-    group: "{{ ansible_user_id }}"
+    owner: "ansible"
+    group: "ansible"
     mode: "600"
     remote_src: false
-    src: "{{ ansible_user_dir }}/.ssh/id_ed25519.pub"
-    dest: "{{ ansible_user_dir }}/.ssh/authorized_keys"
+    src: "/home/ansible/.ssh/id_ed25519.pub"
+    dest: "/home/ansible/.ssh/authorized_keys"
 

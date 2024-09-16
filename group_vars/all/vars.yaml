@@ -1,0 +1,12 @@
+#
+#   Vars for all hosts
+#
+
+
+# VM layer vars
+
+VM_PREFIX: "eave"
+DOMAIN: "wallai-iter"
+MASTER_NODES: 1
+WORKER_NODES: 2
+

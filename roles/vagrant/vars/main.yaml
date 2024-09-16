@@ -1,5 +1,5 @@
 #
-#   Local vars
+#   Vagrant role vars
 #
 
 
@@ -10,10 +10,6 @@ MASTERS_CPU: 2
 MASTERS_MEM: 2048
 WORKERS_CPU: 2
 WORKERS_MEM: 2048
-VM_PREFIX: "eave"
-MASTER_NODES: 1
-WORKER_NODES: 2
-DOMAIN: "wallai-iter"
 SUBNET: "192.168.56."
 MASTERS_IP_BASE: 1
 WORKERS_IP_BASE: 100

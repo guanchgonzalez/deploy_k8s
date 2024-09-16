@@ -7,8 +7,10 @@
 localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python
 
 [masters]
-eavemaster01.wallai-iter
+# eavemaster01.wallai-iter
+"{{ VM_PREFIX }}master\[01:{{ ( MASTER_NODES < 10 ) | ternary('0', '') }}{{ MASTER_NODES }}].{{ DOMAIN }}"
 
 [workers]
-eavenode0[1:2].wallai-iter
+# eavenode0[1:2].wallai-iter
+"{{ VM_PREFIX }}node\[01:{{ ( WORKER_NODES < 10 ) | ternary('0', '') }}{{ WORKER_NODES }}].{{ DOMAIN }}"
 
