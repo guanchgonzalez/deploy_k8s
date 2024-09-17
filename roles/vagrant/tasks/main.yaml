@@ -10,10 +10,10 @@
     path: "{{ VAGRANT_ENV_HOME }}"
     state: "directory"
 
-- name: Destroy previous VM's
-  ansible.builtin.command:
-    cmd: "vagrant destroy -f"
-    chdir: "{{ VAGRANT_ENV_HOME }}"
+# - name: Destroy previous VM's
+#   ansible.builtin.command:
+#     cmd: "vagrant destroy -f"
+#     chdir: "{{ VAGRANT_ENV_HOME }}"
 
 - name: Generate Vagrantfile from template
   ansible.builtin.template:

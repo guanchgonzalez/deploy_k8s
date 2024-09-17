@@ -1,0 +1,41 @@
+#
+#   Kubernetes cluster deployment
+#
+# Target hosts: master, worker
+#
+
+
+- name: Disabling swap on every node
+  become: true
+  block:
+  - name: Disable right now
+    ansible.builtin.command: swapoff -a
+
+  - name: Disable permanently
+    ansible.builtin.lineinfile:
+      dest: "/etc/fstab"
+      regexp: '^[^#].*swap'
+      state: absent
+
+
+- name: Include Kubernetes repo
+  become: true
+  ansible.builtin.yum_repository:
+    name: "kubernetes"
+    baseurl: "https://pkgs.k8s.io/core:/stable:/v1.31/rpm/"
+    enabled: true
+    gpgcheck: true
+    gpgkey: "https://pkgs.k8s.io/core:/stable:/v1.31/rpm/repodata/repomd.xml.key"
+    exclude: ["kubelet", "kubeadm", "kubectl", "tools", "kubernetes-cni"]
+    state: present
+
+- name: Install cluster services
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - kubelet
+  - kubeadm
+  - kubectl
+  - docker
