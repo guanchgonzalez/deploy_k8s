@@ -12,16 +12,55 @@
     ansible.builtin.command: swapoff -a
 
   - name: Disable permanently
-    ansible.builtin.lineinfile:
-      dest: "/etc/fstab"
-      regexp: '^[^#].*swap'
+    ansible.posix.mount:
+      path: "{{ item }}"
+      fstype: swap
       state: absent
+    with_items:
+    - swap
+    - none
+
+
+- name: Remove old packages versions
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+  - docker
+  - docker-client
+  - docker-client-latest
+  - docker-common
+  - docker-latest
+  - docker-latest-logrotate
+  - docker-logrotate
+  - docker-engine
+  - podman
+  - runc
+  - containerd
+  - kubelet
+  - kubeadm
+  - kubectl
+  - kubernetes-cni
+
+
+- name: Include Docker repo
+  become: true
+  ansible.builtin.yum_repository:
+    name: "docker-ce-stable"
+    description: "Docker CE Stable - $basearch"
+    baseurl: "https://download.docker.com/linux/rhel/$releasever/$basearch/stable"
+    enabled: true
+    gpgcheck: true
+    gpgkey: "https://download.docker.com/linux/rhel/gpg"
+    state: present
 
 
 - name: Include Kubernetes repo
   become: true
   ansible.builtin.yum_repository:
     name: "kubernetes"
+    description: "Kubernetes stable v1.31"
     baseurl: "https://pkgs.k8s.io/core:/stable:/v1.31/rpm/"
     enabled: true
     gpgcheck: true
@@ -29,13 +68,14 @@
     exclude: ["kubelet", "kubeadm", "kubectl", "tools", "kubernetes-cni"]
     state: present
 
+
 - name: Install cluster services
   become: true
   ansible.builtin.dnf:
     name: "{{ item }}"
     state: present
   with_items:
+  - docker
   - kubelet
   - kubeadm
   - kubectl
-  - docker
