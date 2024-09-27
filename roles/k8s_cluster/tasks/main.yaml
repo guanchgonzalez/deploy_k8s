@@ -28,6 +28,8 @@
     state: absent
   with_items:
   - docker
+  - docker-ce
+  - docker-ce-cli
   - docker-client
   - docker-client-latest
   - docker-common
@@ -37,7 +39,7 @@
   - docker-engine
   - podman
   - runc
-  - containerd
+  - containerd.io
   - kubelet
   - kubeadm
   - kubectl
@@ -70,12 +72,14 @@
 
 
 - name: Install cluster services
-  become: true
-  ansible.builtin.dnf:
-    name: "{{ item }}"
-    state: present
-  with_items:
-  - docker
-  - kubelet
-  - kubeadm
-  - kubectl
+  ansible.builtin.include_role:
+    name: packages
+    apply: {"become": true}
+  vars:
+    packages:
+    - pkg: docker-ce
+    - pkg: docker-ce-cli
+    - pkg: containerd.io
+    - pkg: kubelet
+    - pkg: kubeadm
+    - pkg: kubectl
