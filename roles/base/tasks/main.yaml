@@ -13,16 +13,38 @@
     packages:
     - pkg: mlocate
 
-- name: Debug. Show hostvars.inventory_hostname
-  ansible.builtin.debug:
-    var: vars
+- name: Create deployment dir with hosts content
+  block:
+  - name: Create deployment dir
+    ansible.builtin.file:
+      path: "{{ MISC_PATH }}"
+      state: directory
+
+  - name: Deploy hosts file in new path
+    ansible.builtin.copy:
+      src: "{{ MISC_PATH }}/hosts"
+      dest: "{{ MISC_PATH }}/hosts"
+
+- name: Update the hosts entries
+  become: true
+  block:
+  - name: Remove previous hosts entries
+    ansible.builtin.lineinfile:
+      path: "/etc/hosts"
+      regexp: '^.*{{ DOMAIN }}.*$'
+      state: absent
+
+  - name: Insert new hosts entries
+    ansible.builtin.blockinfile:
+      path: "/etc/hosts"
+      block: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/hosts' ) }}"
 
 - name: Enabling parameters in SSH service as CLIENT
   become: true
   ansible.builtin.lineinfile:
     path: "/etc/ssh/ssh_config"
-    regexp: "{{ item.key }}"
-    line: "{{ item.value }}"
+    regexp: '{{ item.key }}'
+    line: '{{ item.value }}'
   with_items:
   - {key: '^# Host', value: 'Host *'}
   - {key: '^ *ServerAliveInterval', value: '  ServerAliveInterval 20'}
@@ -36,8 +58,8 @@
   - name: Set parameters values
     ansible.builtin.lineinfile:
       path: "/etc/ssh/sshd_config"
-      regexp: "{{ item.key }}"
-      line: "{{ item.value }}"
+      regexp: '{{ item.key }}'
+      line: '{{ item.value }}'
       validate: sshd -t -f %s
     with_items:
     - {key: '^ClientAliveInterval', value: 'ClientAliveInterval 20'}
@@ -54,11 +76,26 @@
 - name: Configuring network service
   become: true
   block:
+  - name: Get regex pattern for local IP
+    ansible.builtin.set_fact:
+      # pattern: "[1-9]+.[1-9]+.[1-9]+.[1-9]+ {{ ansible_nodename }}"
+      pattern: "(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?) {{ ansible_nodename }}"
+
+  - name: Show pattern
+    ansible.builtin.debug:
+      msg: "{{ pattern }}"
+
   - name: Set hostname with private IP in /etc/hosts
-    ansible.builtin.replace:
+    ansible.builtin.lineinfile:
       path: "/etc/hosts"
-      regexp: '^.*{{ ansible_nodename }}.*'
-      replace: '{{ ansible_eth1.ipv4.address}}\t{{ ansible_nodename }} {{ ansible_nodename }}.local'
+      regexp: '^.*{{ ansible_nodename }}'
+      line: "{{ lookup('file', '{{ MISC_PATH }}/hosts') | regex_search(pattern) }} {{ ansible_nodename }}.local"
+
+  # - name: Set hostname with private IP in /etc/hosts
+  #   ansible.builtin.replace:
+  #     path: "/etc/hosts"
+  #     regexp: '^.*{{ ansible_nodename }}.*'
+  #     replace: '{{ ansible_eth1.ipv4.address}}\t{{ ansible_nodename }} {{ ansible_nodename }}.local'
 
   - name: Set Google DNS servers
     ansible.builtin.blockinfile:
@@ -106,7 +143,7 @@
   when: reboot_required.reboot_required
   ignore_errors: true
 
-- name: Debug. Show hostvars.inventory_hostname
-  ansible.builtin.debug:
-    var: hostvars[inventory_hostname]
+# - name: Debug. Show hostvars.inventory_hostname
+#   ansible.builtin.debug:
+#     var: hostvars[inventory_hostname]
 

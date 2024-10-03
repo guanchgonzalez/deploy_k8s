@@ -59,6 +59,13 @@ dnf -y install vagrant</code></pre>
     </div>
   </li>
 
+  <li> Create log dir for Ansible:
+    <div style="margin:10px;padding:10px;background-color:#f4f4f4;font-family: 'Courier New', Courier, monospace">
+      <pre><code class="language-shell">touch /var/log/ansible.log
+chown ansible:ansible /var/log/ansible.log</code></pre>
+    </div>
+  </li>
+
 </ol>
 
 <p>Execute these steps in your Fedora or RedHat based host machine (notebook) with the new management user:</p>

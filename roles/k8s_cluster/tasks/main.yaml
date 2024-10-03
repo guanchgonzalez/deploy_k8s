@@ -8,10 +8,10 @@
 - name: Disabling swap on every node
   become: true
   block:
-  - name: Disable right now
+  - name: Disable swap right now
     ansible.builtin.command: swapoff -a
 
-  - name: Disable permanently
+  - name: Disable swap permanently
     ansible.posix.mount:
       path: "{{ item }}"
       fstype: swap
@@ -19,7 +19,6 @@
     with_items:
     - swap
     - none
-
 
 - name: Remove old packages versions
   become: true
@@ -45,18 +44,15 @@
   - kubectl
   - kubernetes-cni
 
-
-- name: Include Docker repo
+- name: Including and enabling Docker repo by commands
   become: true
-  ansible.builtin.yum_repository:
-    name: "docker-ce-stable"
-    description: "Docker CE Stable - $basearch"
-    baseurl: "https://download.docker.com/linux/rhel/$releasever/$basearch/stable"
-    enabled: true
-    gpgcheck: true
-    gpgkey: "https://download.docker.com/linux/rhel/gpg"
-    state: present
+  block:
+  - name: Include Docker repo
+    ansible.builtin.command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
+  - name: Enable Docker repo
+    become: true
+    ansible.builtin.command: dnf config-manager --enable docker-ce-stable
 
 - name: Include Kubernetes repo
   become: true
@@ -67,9 +63,8 @@
     enabled: true
     gpgcheck: true
     gpgkey: "https://pkgs.k8s.io/core:/stable:/v1.31/rpm/repodata/repomd.xml.key"
-    exclude: ["kubelet", "kubeadm", "kubectl", "tools", "kubernetes-cni"]
+    # exclude: ["kubelet", "kubeadm", "kubectl", "tools", "kubernetes-cni"]
     state: present
-
 
 - name: Install cluster services
   ansible.builtin.include_role:
@@ -83,3 +78,4 @@
     - pkg: kubelet
     - pkg: kubeadm
     - pkg: kubectl
+

@@ -30,6 +30,7 @@ Vagrant.configure("2") do |config|
 
   # Common configuration:
   config.vm.box = "#{VAGRANT_BOX}"
+  config.vm.synced_folder ".", "/vagrant", disabled: true
  
   # Provision Master Nodes
   (1..MASTER_NODES).each do |i|

@@ -5,7 +5,8 @@
 
 # VM layer vars
 
-VAGRANT_BOX: "generic/rhel8"
+# VAGRANT_BOX: "generic/rhel8"
+VAGRANT_BOX: "~/misc/rhel94_x86_64.box"
 MASTERS_CPU: 2
 MASTERS_MEM: 2048
 WORKERS_CPU: 2

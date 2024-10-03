@@ -5,15 +5,18 @@
 #
 
 
-- name: Create deployment dir
+- name: Create deployment dirs
   ansible.builtin.file:
-    path: "{{ VAGRANT_ENV_HOME }}"
+    path: "{{ item }}"
     state: "directory"
+  with_items:
+  - "{{ VAGRANT_ENV_HOME }}"
+  - "{{ MISC_PATH }}"
 
-# - name: Destroy previous VM's
-#   ansible.builtin.command:
-#     cmd: "vagrant destroy -f"
-#     chdir: "{{ VAGRANT_ENV_HOME }}"
+- name: Destroy previous VM's
+  ansible.builtin.command:
+    cmd: "vagrant destroy -f"
+    chdir: "{{ VAGRANT_ENV_HOME }}"
 
 - name: Generate Vagrantfile from template
   ansible.builtin.template:
@@ -45,30 +48,42 @@
     cmd: "vagrant up"
     chdir: "{{ VAGRANT_ENV_HOME }}"
 
+- name: Create hosts file with node lists
+  block:
+  - name: Create empty hosts file
+    ansible.builtin.file:
+      path: "{{ MISC_PATH }}/hosts"
+      state: touch
+
+  - name: Insert master entries into hosts file
+    ansible.builtin.lineinfile:
+      path: "{{ MISC_PATH }}/hosts"
+      line: "{{ SUBNET }}{{ MASTERS_IP_BASE + item }} {{ VM_PREFIX }}master{{ ( item < 10 ) | ternary('0', '') }}{{ item }}.{{ DOMAIN }}"
+    loop: "{{ range(1, MASTER_NODES + 1) | list }}"
+
+  - name: Insert worker entries into hosts file
+    ansible.builtin.lineinfile:
+      path: "{{ MISC_PATH }}/hosts"
+      line: "{{ SUBNET }}{{ WORKERS_IP_BASE + item }} {{ VM_PREFIX }}node{{ ( item < 10 ) | ternary('0', '') }}{{ item }}.{{ DOMAIN }}"
+    loop: "{{ range(1, WORKER_NODES + 1) | list }}"
+
 - name: Remove previous known_hosts entries
   ansible.builtin.lineinfile:
     path: "~/.ssh/known_hosts"
     regexp: '^.*{{ DOMAIN }}.*$'
     state: absent
 
-- name: Remove previous hosts entries
+- name: Update the hosts entries
   become: true
-  ansible.builtin.lineinfile:
-    path: "/etc/hosts"
-    regexp: '^.*{{ DOMAIN }}.*$'
-    state: absent
+  block:
+  - name: Remove previous hosts entries
+    ansible.builtin.lineinfile:
+      path: "/etc/hosts"
+      regexp: '^.*{{ DOMAIN }}.*$'
+      state: absent
 
-- name: Insert master entries into hosts file
-  become: true
-  ansible.builtin.lineinfile:
-    path: "/etc/hosts"
-    line: "{{ SUBNET }}{{ MASTERS_IP_BASE + item }} {{ VM_PREFIX }}master{{ ( item < 10 ) | ternary('0', '') }}{{ item }}.{{ DOMAIN }}"
-  loop: "{{ range(1, MASTER_NODES + 1) | list }}"
-
-- name: Insert worker entries into hosts file
-  become: true
-  ansible.builtin.lineinfile:
-    path: "/etc/hosts"
-    line: "{{ SUBNET }}{{ WORKERS_IP_BASE + item }} {{ VM_PREFIX }}node{{ ( item < 10 ) | ternary('0', '') }}{{ item }}.{{ DOMAIN }}"
-  loop: "{{ range(1, WORKER_NODES + 1) | list }}"
+  - name: Insert new hosts entries
+    ansible.builtin.blockinfile:
+      path: "/etc/hosts"
+      block: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/hosts' ) }}"
 

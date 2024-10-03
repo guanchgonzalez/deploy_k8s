@@ -5,6 +5,7 @@
 
 # VM layer vars
 
+MISC_PATH: "~/misc"
 VM_PREFIX: "eave"
 DOMAIN: "wallai-iter"
 MASTER_NODES: 1

@@ -3,16 +3,16 @@
 #
 
 
-- hosts: masters, workers
-  gather_facts: true
-  roles:
-  - role: base
-
 # - hosts: masters, workers
-#   gather_facts: false
+#   gather_facts: true
 #   roles:
-#   - role: k8s_cluster
-# 
+#   - role: base
+
+- hosts: masters, workers
+  gather_facts: false
+  roles:
+  - role: k8s_cluster
+
 # - hosts: workers
 #   gather_facts: false
 #   roles:
