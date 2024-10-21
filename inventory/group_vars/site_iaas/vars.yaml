@@ -1,0 +1,10 @@
+#
+#   Vars for TeideHP IaaS hosts
+#
+
+
+# VM layer vars
+
+MASTER_NODES: 3
+WORKER_NODES: 3
+

@@ -1,0 +1,28 @@
+#
+#   ITER IaaS role vars
+#
+
+
+# IAAS_URL: "http://one.iter.es:9869"
+# IAAS_URL: "http://10.5.22.19:9869"
+IAAS_URL: "http://one.iter.es:2633"
+IAAS_USER: "teide-e110"
+IAAS_PASS: "WaMoo2afei"
+# TPL_NAME: "redhat-9.4-developer-subcription-eave-template"
+TPL_ID: 472
+VM_IDS:
+- id: 5637
+- id: 5638
+- id: 5639
+- id: 5640
+- id: 5641
+- id: 5642
+MASTER_VM_IDS:
+  1: "5637"
+  2: "5638"
+  3: "5639"
+WORKER_VM_IDS:
+  1: "5640"
+  2: "5641"
+  3: "5642"
+
