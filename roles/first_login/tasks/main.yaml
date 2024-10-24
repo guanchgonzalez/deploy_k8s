@@ -1,0 +1,22 @@
+#
+#   ITER OpenNebula first login tasks
+#
+# Target hosts: local
+#
+
+
+- name: Check when the ITER user has already a new password
+  ansible.builtin.ping:
+  register: ping_result
+  ignore_unreachable: true
+
+- name: Renew administrator password when the login fails due to it is the first login attempt
+  when: ping_result != "pong"
+  ansible.builtin.expect:
+    command: hostname
+    responses:
+      "assword":
+      - "{{ DEF_ADMIN_PASS }}"
+      - "{{ NEW_ADMIN_PASS }}"
+      - "{{ NEW_ADMIN_PASS }}"
+

@@ -1,0 +1,12 @@
+#
+#   Vars for Vagrant local hosts
+#
+
+
+# VM layer vars
+
+VM_PREFIX: "k8s"
+DOMAIN: "wallai-local"
+MASTER_NODES: 1
+WORKER_NODES: 2
+

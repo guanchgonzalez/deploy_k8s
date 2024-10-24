@@ -8,6 +8,12 @@
   roles:
   - role: iter_iaas
 
+- hosts: masters, workers
+  gather_facts: false
+  remote_user: administrador
+  roles:
+  - role: first_login
+
 # - hosts: masters, workers
 #   gather_facts: false
 #   remote_user: administrador

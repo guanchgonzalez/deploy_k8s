@@ -1,0 +1,9 @@
+#
+#   Vars for all hosts
+#
+
+
+# VM layer vars
+
+MISC_PATH: "~/misc"
+

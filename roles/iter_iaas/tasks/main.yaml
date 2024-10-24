@@ -77,44 +77,23 @@
     line: "{{ lookup('file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}node{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
   with_dict: "{{ WORKER_VM_IDS }}"
 
-# - name: Insert master entries into hosts file
-#   ansible.builtin.lineinfile:
-#     path: "{{ MISC_PATH }}/hosts"
-#     line: "{{ SUBNET }}{{ MASTERS_IP_BASE + item }} {{ VM_PREFIX }}master{{ ( item < 10 ) | ternary('0', '') }}{{ item }}.{{ DOMAIN }}"
-#   loop: "{{ range(1, MASTER_NODES + 1) | list }}"
-# 
-# - name: Insert worker entries into hosts file
-#   ansible.builtin.lineinfile:
-#     path: "{{ MISC_PATH }}/hosts"
-#     line: "{{ SUBNET }}{{ WORKERS_IP_BASE + item }} {{ VM_PREFIX }}node{{ ( item < 10 ) | ternary('0', '') }}{{ item }}.{{ DOMAIN }}"
-#   loop: "{{ range(1, WORKER_NODES + 1) | list }}"
-# 
-# - name: Remove previous known_hosts entries
-#   ansible.builtin.lineinfile:
-#     path: "~/.ssh/known_hosts"
-#     regexp: '^.*{{ DOMAIN }}.*$'
-#     state: absent
-# 
-# - name: Update the hosts entries
-#   become: true
-#   block:
-#   - name: Remove previous hosts entries
-#     ansible.builtin.lineinfile:
-#       path: "/etc/hosts"
-#       regexp: '^.*{{ DOMAIN }}.*$'
-#       state: absent
-# 
-#   - name: Insert new hosts entries
-#     ansible.builtin.blockinfile:
-#       path: "/etc/hosts"
-#       block: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/hosts' ) }}"
-# 
-# - name: Set new passwd for default user with expect
-#   community.general.one_vm:
-#     instance_ids: "{{ item.id }}"
-#     updateconf:
-#       CONTEXT:
-#         START_SCRIPT: ip a
-#   when: item.id | first
-#   with_items: "{{ VM_IDS }}"
-# 
+- name: Remove previous known_hosts entries
+  ansible.builtin.lineinfile:
+    path: "~/.ssh/known_hosts"
+    regexp: '^.*{{ DOMAIN }}.*$'
+    state: absent
+
+- name: Update the hosts entries
+  become: true
+  block:
+  - name: Remove previous hosts entries
+    ansible.builtin.lineinfile:
+      path: "/etc/hosts"
+      regexp: '^.*{{ DOMAIN }}.*$'
+      state: absent
+
+  - name: Insert new hosts entries
+    ansible.builtin.blockinfile:
+      path: "/etc/hosts"
+      block: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/hosts' ) }}"
+

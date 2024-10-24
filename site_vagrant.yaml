@@ -5,9 +5,6 @@
 
 - hosts: local
   gather_facts: false
-  vars:
-  - MASTER_NODES: 1
-  - WORKER_NODES: 2
   roles:
   - role: vagrant
 
