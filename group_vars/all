@@ -3,7 +3,6 @@
 #
 
 
-# VM layer vars
-
+ENV_FILE: ".env"
 MISC_PATH: "~/misc"
 

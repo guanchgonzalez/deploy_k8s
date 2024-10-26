@@ -5,6 +5,22 @@
 #
 
 
+# - name: Load env Vars
+#   community.general.dotenv:
+#     path: "{{ ENV_FILE }}"
+
+- name: Get env vars
+  block:
+  - name: Get IAAS var from env file
+    ansible.builtin.set_fact:
+      iaas_info: "{{ lookup('ansible.builtin.ini', 'IAAS type=properties file=' + ENV_FILE) | split }}"
+
+  - name: Get nodename parameters
+    ansible.builtin.set_fact:
+      cacheable: true
+      VM_PREFIX: "{{ iaas_info.0 }}"
+      DOMAIN: "{{ iaas_info.1 }}"
+
 - name: Create deployment dirs
   ansible.builtin.file:
     path: "{{ MISC_PATH }}"

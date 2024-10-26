@@ -1,15 +1,19 @@
-#!/usr/bin/python
+#!/home/ansible/deploy_k8s/.environ/bin/python
 #
 #   Create inventory list from all hosts groups vars
 #
 
 
 # Imports
-import json
+import dotenv, json, os
+
+# Load Ansible environment variables
+dotenv.load_dotenv()
 
 # Global variables
-var, nodes = {}, {}
-environ = ['vagrant', 'iter']
+vars, nodes = {}, {}
+vars['vagrant'] = os.getenv('VAGRANT').split(' ')
+vars['iaas'] = os.getenv('IAAS').split(' ')
 
 # Local group
 nodes['local'] = {}
@@ -27,34 +31,27 @@ nodes['workers'] = {}
 nodes['workers']['hosts'] = []
 
 # Inventory vars
-for e in environ:
-    var[e] = {}
-    with open('group_vars/' + e + '/vars.yaml') as conf:
-        for line in conf:
-            if ":" in line:
-                name, value = line.split(":")
-                var[e][name] = str(value).replace(" ", "").rstrip()
-
-    vm_prefix = var[e]["VM_PREFIX"].replace('"', '')
-    domain = var[e]["DOMAIN"].replace('"', '')
-    master_nodes = int(var[e]["MASTER_NODES"])
-    worker_nodes = int(var[e]["WORKER_NODES"])
+for e in vars.keys():
+    VM_PREFIX = vars[e][0]
+    DOMAIN = vars[e][1]
+    MASTER_NODES = vars[e][2]
+    WORKER_NODES = vars[e][3]
 
     # Given environment group
     nodes[e] = {}
     nodes[e]['hosts'] = []
 
     # Master hosts
-    for m in range(1, int(master_nodes) + 1):
+    for m in range(1, int(MASTER_NODES) + 1):
         n = f"0{m}" if m < 10 else f"{m}"
-        nodename = vm_prefix + f"master{n}." + domain
+        nodename = VM_PREFIX + f"master{n}." + DOMAIN
         nodes['masters']['hosts'].append(nodename)
         nodes[e]['hosts'].append(nodename)
 
     # Workers hosts
-    for w in range(1, int(worker_nodes) + 1):
+    for w in range(1, int(WORKER_NODES) + 1):
         n = f"0{w}" if w < 10 else f"{w}"
-        nodename = vm_prefix + f"node{n}." + domain
+        nodename = VM_PREFIX + f"node{n}." + DOMAIN
         nodes['workers']['hosts'].append(nodename)
         nodes[e]['hosts'].append(nodename)
 

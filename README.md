@@ -85,6 +85,17 @@ ln -s [site_vagrant.yaml|site_iaas.yaml] site.yaml</code></pre>
     </div>
   </li>  
 
+  <li> Install Python virtualenv, configure it and load it to install the requirements.txt file modules:
+    <div style="margin:10px;padding:10px;background-color:#f4f4f4;font-family: 'Courier New', Courier, monospace">
+      <pre><code class="language-shell">python -m ensurepip --default-pip
+python -m pip install --upgrade pip
+pip install virtualenv
+virtualenv .environ
+source .environ/bin/activate
+pip install -r requirements.txt</code></pre>
+    </div>
+  </li>
+
   <li> Execute the Ansible playbook
     <div style="margin:10px;padding:10px;background-color:#f4f4f4;font-family: 'Courier New', Courier, monospace">
       <pre><code class="language-shell">ansible-playbook site.yaml</code></pre>
