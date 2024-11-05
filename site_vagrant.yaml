@@ -2,17 +2,15 @@
 #   Main playbook to deploy all the Wall-AI ITER infrastructure locally via Vagrant
 #
 
-
 - hosts: local
   gather_facts: false
   roles:
   - role: vagrant
 
-- hosts: masters, workers
+- hosts: masters, workers, &vagrant
   gather_facts: false
   remote_user: vagrant
   roles:
   - role: mgmt_user
 
 - import_playbook: "site_common.yaml"
-

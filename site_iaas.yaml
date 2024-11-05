@@ -7,11 +7,11 @@
   roles:
   - role: iter_iaas
 
-# - hosts: masters, workers
-#   gather_facts: false
-#   remote_user: administrador
-#   roles:
-#   - role: mgmt_user
-#
+- hosts: masters, workers, &iaas
+  gather_facts: false
+  remote_user: administrador
+  roles:
+  - role: mgmt_user
+
 # - import_playbook: "site_common.yaml"
 #

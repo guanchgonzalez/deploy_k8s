@@ -27,6 +27,8 @@
     state: "directory"
 
 - name: Get VM IP's
+  with_items: "{{ VM_IDS }}"
+  register: vm_ips
   community.general.one_vm:
     api_url: "{{ IAAS_URL }}"
     api_username: "{{ IAAS_USER }}"
@@ -35,8 +37,6 @@
     updateconf:
       CONTEXT:
         START_SCRIPT: ip a
-  register: vm_ips
-  with_items: "{{ VM_IDS }}"
 
 # - name: Show VM IP's info
 #   ansible.builtin.debug:
@@ -54,44 +54,44 @@
 - name: Create empty hosts file
   block:
   - name: Remove old hosts file
+    with_items:
+    - "ips"
+    - "hosts"
     ansible.builtin.file:
       path: "{{ MISC_PATH }}/{{ item }}"
       state: absent
+
+  - name: Create empty hosts file
     with_items:
     - "ips"
     - "hosts"
-
-  - name: Create empty hosts file
     ansible.builtin.file:
       path: "{{ MISC_PATH }}/{{ item }}"
       state: touch
-    with_items:
-    - "ips"
-    - "hosts"
 
 - name: Insert VM IP's into local hosts file
+  loop: "{{ vm_ips.results }}"
   ansible.builtin.lineinfile:
     path: "{{ MISC_PATH }}/ips"
     line: "{{ item.instances.0.networks.0.ip }} {{ item.instances.0.vm_id }}"
-  loop: "{{ vm_ips.results }}"
 
 - name: Get regex pattern for local IP
   ansible.builtin.set_fact:
     pattern: "(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
 
 - name: Substitute every VM ID for its master hostname into cluster
+  with_dict: "{{ MASTER_VM_IDS }}"
   ansible.builtin.lineinfile:
     path: "{{ MISC_PATH }}/hosts"
     regexp: "^.*{{ item.value }}"
     line: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}master{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
-  with_dict: "{{ MASTER_VM_IDS }}"
 
 - name: Substitute every VM ID for its worker hostname into cluster
+  with_dict: "{{ WORKER_VM_IDS }}"
   ansible.builtin.lineinfile:
     path: "{{ MISC_PATH }}/hosts"
     regexp: "^.*{{ item.value }}"
     line: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}node{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
-  with_dict: "{{ WORKER_VM_IDS }}"
 
 - name: Remove previous known_hosts entries
   ansible.builtin.lineinfile:
@@ -115,9 +115,12 @@
 
 - name: Renew administrator password when the login fails due to it is the first login attempt
   with_items: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | split('\n') }}"
+  register: result
+  changed_when: result.rc == 0
   ignore_errors: true
-  no_log: true
+  # no_log: true
   ansible.builtin.expect:
+    timeout: 5
     command: "ssh -o StrictHostKeychecking=no {{ DEF_USER }}@{{ item.split()[0] }}"
     responses:
       ".*password: ":
@@ -126,5 +129,29 @@
         - "{{ DEF_ADMIN_PASS }}"
       ".*contrase.*":
         - "{{ NEW_ADMIN_PASS }}"
+        - "{{ NEW_ADMIN_PASS }}"
+
+- name: Set Public key for default VM's user when the default user has made its first login
+  when: result.changed
+  with_items: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | split('\n') }}"
+  ansible.builtin.expect:
+    timeout: 5
+    command: "ssh -o StrictHostKeychecking=no {{ DEF_USER }}@{{ item.split()[0] }} 'ssh-keygen -q -t ed25519 -N \"\"'"
+    responses:
+      ".*password: ":
+        - "{{ NEW_ADMIN_PASS }}"
+      ".*id_ed25519.*":
+        - ""
+      ".*y/n.*":
+        - "y"
+
+- name: Copy controller user pub key into every VM as authorized key for its default user when it has made its first login
+  when: result.changed
+  with_items: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | split('\n') }}"
+  ansible.builtin.expect:
+    timeoout: 5
+    command: "ssh {{ DEF_USER }}@{{ item.split()[0] }} 'umask 077; echo {{ lookup('file', '~/.ssh/id_ed25519.pub') }} > ~/.ssh/authorized_keys'"
+    responses:
+      ".*password: ":
         - "{{ NEW_ADMIN_PASS }}"
 
