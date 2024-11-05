@@ -83,14 +83,14 @@
   ansible.builtin.lineinfile:
     path: "{{ MISC_PATH }}/hosts"
     regexp: "^.*{{ item.value }}"
-    line: "{{ lookup('file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}master{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
+    line: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}master{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
   with_dict: "{{ MASTER_VM_IDS }}"
 
 - name: Substitute every VM ID for its worker hostname into cluster
   ansible.builtin.lineinfile:
     path: "{{ MISC_PATH }}/hosts"
     regexp: "^.*{{ item.value }}"
-    line: "{{ lookup('file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}node{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
+    line: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}node{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
   with_dict: "{{ WORKER_VM_IDS }}"
 
 - name: Remove previous known_hosts entries
@@ -112,4 +112,19 @@
     ansible.builtin.blockinfile:
       path: "/etc/hosts"
       block: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/hosts' ) }}"
+
+- name: Renew administrator password when the login fails due to it is the first login attempt
+  with_items: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | split('\n') }}"
+  ignore_errors: true
+  no_log: true
+  ansible.builtin.expect:
+    command: "ssh -o StrictHostKeychecking=no {{ DEF_USER }}@{{ item.split()[0] }}"
+    responses:
+      ".*password: ":
+        - "{{ DEF_ADMIN_PASS }}"
+      ".*actual: ":
+        - "{{ DEF_ADMIN_PASS }}"
+      ".*contrase.*":
+        - "{{ NEW_ADMIN_PASS }}"
+        - "{{ NEW_ADMIN_PASS }}"
 

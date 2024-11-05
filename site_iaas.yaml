@@ -2,23 +2,16 @@
 #   Main playbook to deploy all the Wall-AI ITER infrastructure in TeideHPC IaaS
 #
 
-
 - hosts: local
   gather_facts: false
   roles:
   - role: iter_iaas
-
-- hosts: masters, workers, &iaas
-  gather_facts: false
-  remote_user: administrador
-  roles:
-  - role: first_login
 
 # - hosts: masters, workers
 #   gather_facts: false
 #   remote_user: administrador
 #   roles:
 #   - role: mgmt_user
-# 
+#
 # - import_playbook: "site_common.yaml"
-# 
+#

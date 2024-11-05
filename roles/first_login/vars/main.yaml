@@ -1,8 +1,0 @@
-#
-#   First login into IaaS VM's role vars
-#
-
-
-DEF_ADMIN_PASS: "changeme"
-NEW_ADMIN_PASS: "p4S5#0_D"
-

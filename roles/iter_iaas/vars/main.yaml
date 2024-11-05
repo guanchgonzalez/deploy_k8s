@@ -2,7 +2,6 @@
 #   ITER IaaS role vars
 #
 
-
 # IAAS_URL: "http://one.iter.es:9869"
 # IAAS_URL: "http://10.5.22.19:9869"
 IAAS_URL: "http://one.iter.es:2633"
@@ -25,4 +24,6 @@ WORKER_VM_IDS:
   1: "5640"
   2: "5641"
   3: "5642"
-
+DEF_USER: "administrador"
+DEF_ADMIN_PASS: "changeme"
+NEW_ADMIN_PASS: "p4S5#0_D"
