@@ -2,9 +2,7 @@
 #   Main playbook to deploy all the Wall-AI ITER infrastructure in TeideHPC IaaS
 #
 
-- hosts: masters, workers, &iaas
-  vars:
-    ansible_connection: local
+- hosts: local
   gather_facts: false
   roles:
   - role: iter_iaas

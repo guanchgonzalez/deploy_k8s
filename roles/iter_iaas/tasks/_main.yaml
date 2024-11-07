@@ -13,7 +13,7 @@
   block:
   - name: Get IAAS var from env file
     ansible.builtin.set_fact:
-      iaas_info: "{{ lookup('ansible.builtin.ini', 'IAAS type=properties file=' + ENV_FILE) | split(' ') }}"
+      iaas_info: "{{ lookup('ansible.builtin.ini', 'IAAS type=properties file=' + ENV_FILE) | split }}"
 
   - name: Get nodename parameters
     ansible.builtin.set_fact:
@@ -26,85 +26,73 @@
     path: "{{ MISC_PATH }}"
     state: "directory"
 
-# - name: Get VM IPs
-#   with_items: "{{ VM_IDS }}"
-#   register: vm_ips
-#   run_once: true
-#   community.general.one_vm:
-#     api_url: "{{ IAAS_URL }}"
-#     api_username: "{{ IAAS_USER }}"
-#     api_password: "{{ IAAS_PASS }}"
-#     instance_ids: "{{ item.id }}"
-#     updateconf:
-#       CONTEXT:
-#         START_SCRIPT: ip a
-# 
-# - name: Show VM IPs info
+- name: Get VM IP's
+  with_items: "{{ VM_IDS }}"
+  register: vm_ips
+  community.general.one_vm:
+    api_url: "{{ IAAS_URL }}"
+    api_username: "{{ IAAS_USER }}"
+    api_password: "{{ IAAS_PASS }}"
+    instance_ids: "{{ item.id }}"
+    updateconf:
+      CONTEXT:
+        START_SCRIPT: ip a
+
+# - name: Show VM IP's info
 #   ansible.builtin.debug:
 #     msg: "{{ item.instances.0.networks.0.ip }} {{ item.instances.0.vm_name }}"
 #   register: ips_info
 #   loop: "{{ vm_ips.results }}"
 # 
-# - name: Show VM IPs values
+# - name: Show VM IP's values
 #   ansible.builtin.debug:
 #     msg: "{{ ips_info }}"
 #     # msg: "{{ item }}"
 #   # register: ip_values
 #   # with_items: "{{ ips_info }}"
-# 
-# - name: Create empty hosts file
-#   block:
-#   - name: Remove old hosts file
-#     with_items:
-#     - "ips"
-#     - "hosts"
-#     ansible.builtin.file:
-#       path: "{{ MISC_PATH }}/{{ item }}"
-#       state: absent
-# 
-#   - name: Create empty hosts file
-#     with_items:
-#     - "ips"
-#     - "hosts"
-#     ansible.builtin.file:
-#       path: "{{ MISC_PATH }}/{{ item }}"
-#       state: touch
-# 
-# - name: Insert VM IPs into local hosts file
-#   loop: "{{ vm_ips.results }}"
-#   run_once: true
-#   ansible.builtin.lineinfile:
-#     path: "{{ MISC_PATH }}/ips"
-#     line: "{{ item.instances.0.networks.0.ip }} {{ item.instances.0.vm_id }}"
-# 
-# - name: Insert VM IPs into local inventory hosts file
-#   loop: "{{ vm_ips.results }}"
-#   run_once: true
-#   ansible.builtin.lineinfile:
-#     create: true
-#     path: "inventory/hosts"
-#     line: "host-{{ item.instances.0.vm_id }} ansible_host={{ item.instances.0.networks.0.ip }}"
-# 
-# - name: Get regex pattern for local IP
-#   ansible.builtin.set_fact:
-#     pattern: "(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
-# 
-# - name: Substitute every VM ID for its master hostname into cluster
-#   with_dict: "{{ MASTER_VM_IDS }}"
-#   run_once: true
-#   ansible.builtin.lineinfile:
-#     path: "{{ MISC_PATH }}/hosts"
-#     regexp: "^.*{{ item.value }}"
-#     line: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}master{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
-# 
-# - name: Substitute every VM ID for its worker hostname into cluster
-#   with_dict: "{{ WORKER_VM_IDS }}"
-#   run_once: true
-#   ansible.builtin.lineinfile:
-#     path: "{{ MISC_PATH }}/hosts"
-#     regexp: "^.*{{ item.value }}"
-#     line: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}node{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
-# 
+
+- name: Create empty hosts file
+  block:
+  - name: Remove old hosts file
+    with_items:
+    - "ips"
+    - "hosts"
+    ansible.builtin.file:
+      path: "{{ MISC_PATH }}/{{ item }}"
+      state: absent
+
+  - name: Create empty hosts file
+    with_items:
+    - "ips"
+    - "hosts"
+    ansible.builtin.file:
+      path: "{{ MISC_PATH }}/{{ item }}"
+      state: touch
+
+- name: Insert VM IP's into local hosts file
+  loop: "{{ vm_ips.results }}"
+  ansible.builtin.lineinfile:
+    path: "{{ MISC_PATH }}/ips"
+    line: "{{ item.instances.0.networks.0.ip }} {{ item.instances.0.vm_id }}"
+
+- name: Get regex pattern for local IP
+  ansible.builtin.set_fact:
+    pattern: "(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+
+- name: Substitute every VM ID for its master hostname into cluster
+  with_dict: "{{ MASTER_VM_IDS }}"
+  ansible.builtin.lineinfile:
+    path: "{{ MISC_PATH }}/hosts"
+    regexp: "^.*{{ item.value }}"
+    line: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}master{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
+
+- name: Substitute every VM ID for its worker hostname into cluster
+  with_dict: "{{ WORKER_VM_IDS }}"
+  ansible.builtin.lineinfile:
+    path: "{{ MISC_PATH }}/hosts"
+    regexp: "^.*{{ item.value }}"
+    line: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | regex_search('(' + pattern + ') ' + item.value, '\\1') | first }} {{ VM_PREFIX }}node{{ ( item.key < 10 ) | ternary('0', '') }}{{ item.key }}.{{ DOMAIN }}"
+
 - name: Remove previous known_hosts entries
   ansible.builtin.lineinfile:
     path: "~/.ssh/known_hosts"
@@ -125,10 +113,8 @@
       path: "/etc/hosts"
       block: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/hosts' ) }}"
 
-
 - name: Renew administrator password when the login fails due to it is the first login attempt
   with_items: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | split('\n') }}"
-  run_once: true
   register: result
   changed_when: result.rc == 0
   ignore_errors: true
@@ -145,10 +131,9 @@
         - "{{ NEW_ADMIN_PASS }}"
         - "{{ NEW_ADMIN_PASS }}"
 
-- name: Set Public key for default VMs user when the default user has made its first login
+- name: Set Public key for default VM's user when the default user has made its first login
   when: result.changed
   with_items: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | split('\n') }}"
-  run_once: true
   ansible.builtin.expect:
     timeout: 5
     command: "ssh -o StrictHostKeychecking=no {{ DEF_USER }}@{{ item.split()[0] }} 'ssh-keygen -q -t ed25519 -N \"\"'"
@@ -163,7 +148,6 @@
 - name: Copy controller user pub key into every VM as authorized key for its default user when it has made its first login
   when: result.changed
   with_items: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | split('\n') }}"
-  run_once: true
   ansible.builtin.expect:
     timeoout: 5
     command: "ssh {{ DEF_USER }}@{{ item.split()[0] }} 'umask 077; echo {{ lookup('file', '~/.ssh/id_ed25519.pub') }} > ~/.ssh/authorized_keys'"
@@ -172,21 +156,8 @@
         - "{{ NEW_ADMIN_PASS }}"
 
 - name: Enable NOPASSWD for wheel group users in every VM
-  vars:
-    ansible_connection: ssh
-    ansible_ssh_pass: "{{ NEW_ADMIN_PASS }}"
-    ansible_become_pass: "{{ NEW_ADMIN_PASS }}"
-  become: true
-  remote_user: "{{ DEF_USER }}"
-  ansible.builtin.lineinfile:
-    regexp: '^# %wheel'
-    line: '%wheel'
-    path: "/etc/sudoers"
-
-- name: OLD Enable NOPASSWD for wheel group users in every VM
   # when: result.changed
   with_items: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/ips') | split('\n') }}"
-  run_once: true
   ansible.builtin.expect:
     timeout: 5
     command: "ssh {{ DEF_USER }}@{{ item.split()[0] }} 'sudo -S sed -i \"s/^# .wheel/%wheel/\" /etc/sudoers'"
