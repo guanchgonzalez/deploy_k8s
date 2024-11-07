@@ -5,7 +5,7 @@
 - hosts: masters, workers, &iaas
   vars:
     ansible_connection: local
-  gather_facts: false
+  gather_facts: true
   roles:
   - role: iter_iaas
 
