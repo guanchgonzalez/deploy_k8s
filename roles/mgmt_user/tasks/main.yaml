@@ -5,12 +5,11 @@
 # Vars: none
 #
 
-
 - name: Check availability of VM's
   become: true
   ansible.builtin.copy:
     content: "  VM created and operated by EAVE.\n"
-    dest: /etc/motd
+    dest: "/etc/motd"
 
 - name: Create ansible user
   become: true
@@ -25,7 +24,7 @@
 - name: Set management user passwordless
   become: true
   ansible.builtin.lineinfile:
-    dest: "/etc/sudoers"
+    path: "/etc/sudoers"
     state: present
     regexp: '^%wheel'
     line: '%wheel ALL=(ALL) NOPASSWD: ALL'
@@ -54,4 +53,3 @@
     remote_src: false
     src: "/home/ansible/.ssh/id_ed25519.pub"
     dest: "/home/ansible/.ssh/authorized_keys"
-

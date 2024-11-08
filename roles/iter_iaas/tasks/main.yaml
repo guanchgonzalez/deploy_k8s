@@ -85,7 +85,7 @@
       create: true
       line: "{{ lookup('ansible.builtin.file', '~/.ssh/id_ed25519.pub') }}"
       path: "~/.ssh/authorized_keys"
-      mode: "0644"
+      mode: "0600"
 
 - name: Enable NOPASSWD for wheel group users in every VM
   vars:
@@ -98,6 +98,7 @@
     regexp: '^# %wheel'
     line: '%wheel ALL=(ALL)	NOPASSWD: ALL'
     path: "/etc/sudoers"
+    validate: 'visudo -cf %s'
 
 - name: Remove previous known_hosts entries in every VM
   vars:
@@ -124,5 +125,5 @@
   - name: Insert new hosts entries in every VM
     ansible.builtin.blockinfile:
       path: "/etc/hosts"
-      block: "{{ lookup('ansible.builtin.file', '/etc/hosts') | regex_search('(?s).*' + DOMAIN + '.*?$') }}"
+      block: "{{ lookup('ansible.builtin.file', '/etc/hosts') | regex_findall('^.*' + DOMAIN + '$', multiline=true) | join('\n') }}"
 

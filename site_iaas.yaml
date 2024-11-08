@@ -6,12 +6,13 @@
   vars:
     ansible_connection: local
   gather_facts: true
+  ignore_unreachable: true
   roles:
   - role: iter_iaas
 
 - hosts: masters, workers, &iaas
   gather_facts: false
-  remote_user: administrador
+  remote_user: "administrador"
   roles:
   - role: mgmt_user
 
