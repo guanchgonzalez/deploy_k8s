@@ -1,7 +1,7 @@
 #
 #   ITER OpenNebula deployment tasks
 #
-# Target hosts: local
+# Target hosts: masters, workers, &iaas (but local connection by default)
 #
 
 - name: Get env vars
@@ -41,16 +41,16 @@
   become: true
   ansible.builtin.lineinfile:
     path: "/etc/hosts"
-    line: "{{ ansible_host }} {{ ansible_nodename }}"
+    line: "{{ ansible_host }} {{ inventory_hostname }}"
 
 - name: Renew default VMs user password at first login attempt
   register: result
   changed_when: result.rc == 0
   ignore_errors: true
-  # no_log: true
+  no_log: true
   ansible.builtin.expect:
     timeout: 5
-    command: "ssh -o StrictHostKeychecking=no {{ DEF_USER }}@{{ ansible_host }}"
+    command: "ssh -o StrictHostKeychecking=no {{ DEF_USER }}@{{ inventory_hostname }}"
     responses:
       ".*password: ":
       - "{{ DEF_ADMIN_PASS }}"
@@ -65,36 +65,38 @@
     ansible_connection: ssh
     ansible_ssh_pass: "{{ NEW_ADMIN_PASS }}"
   remote_user: "{{ DEF_USER }}"
-  # when: result.changed
+  when: result.changed
   block:
   - name: Set Public key for default VMs user after the first login
     ansible.builtin.expect:
       timeout: 5
-      command: "ssh-keygen -q -t ed25519 -N ''"
+      command: "ssh-keygen -q -t ed25519"
       responses:
-        ".*id_ed25519.*":
+        ".*key.*":
         - ""
         ".*y/n.*":
         - "y"
+        "Enter.*":
+        - ""
+        - ""
 
   - name: Copy controller user pub key as authorized key after the first login
     ansible.builtin.lineinfile:
       create: true
-      line: "{{ lookup('ansible.builtin.file', '~/.ssh/id_ed25519.pub')"
+      line: "{{ lookup('ansible.builtin.file', '~/.ssh/id_ed25519.pub') }}"
       path: "~/.ssh/authorized_keys"
-      mode: "0700"
+      mode: "0644"
 
 - name: Enable NOPASSWD for wheel group users in every VM
   vars:
     ansible_connection: ssh
-    # ansible_ssh_pass: "{{ NEW_ADMIN_PASS }}"
     ansible_become_pass: "{{ NEW_ADMIN_PASS }}"
   become: true
   remote_user: "{{ DEF_USER }}"
-  # when: result.changed
+  when: result.changed
   ansible.builtin.lineinfile:
     regexp: '^# %wheel'
-    line: '%wheel'
+    line: '%wheel ALL=(ALL)	NOPASSWD: ALL'
     path: "/etc/sudoers"
 
 - name: Remove previous known_hosts entries in every VM
@@ -102,6 +104,7 @@
     ansible_connection: ssh
   remote_user: "{{ DEF_USER }}"
   ansible.builtin.lineinfile:
+    create: true
     path: "~/.ssh/known_hosts"
     regexp: '^.*{{ DOMAIN }}.*$'
     state: absent
@@ -115,11 +118,11 @@
   - name: Remove previous hosts entries in every VM
     ansible.builtin.lineinfile:
       path: "/etc/hosts"
-      regexp: '^.*{{ DOMAIN }}.*$'
+      regexp: '{{ DOMAIN }}'
       state: absent
 
   - name: Insert new hosts entries in every VM
     ansible.builtin.blockinfile:
       path: "/etc/hosts"
-      block: "{{ lookup('ansible.builtin.file', '/etc/hosts') | regex_search('{{
-        DOMAIN }}') }}"
+      block: "{{ lookup('ansible.builtin.file', '/etc/hosts') | regex_search('(?s).*' + DOMAIN + '.*?$') }}"
+
