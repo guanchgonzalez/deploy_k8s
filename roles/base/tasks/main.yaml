@@ -4,68 +4,32 @@
 # Target hosts: master, worker
 #
 
-
-- name: Include the DNF update role
-  ansible.builtin.include_role:
-    name: packages
-    apply: {"become": true}
-  vars:
-    packages:
-    - pkg: mlocate
-
-- name: Create deployment dir with hosts content
-  block:
-  - name: Create deployment dir
-    ansible.builtin.file:
-      path: "{{ MISC_PATH }}"
-      state: directory
-
-  - name: Deploy hosts file in new path
-    ansible.builtin.copy:
-      src: "{{ MISC_PATH }}/hosts"
-      dest: "{{ MISC_PATH }}/hosts"
-
-- name: Update the hosts entries
-  become: true
-  block:
-  - name: Remove previous hosts entries
-    ansible.builtin.lineinfile:
-      path: "/etc/hosts"
-      regexp: '^.*{{ DOMAIN }}.*$'
-      state: absent
-
-  - name: Insert new hosts entries
-    ansible.builtin.blockinfile:
-      path: "/etc/hosts"
-      block: "{{ lookup('ansible.builtin.file', '{{ MISC_PATH }}/hosts' ) }}"
-
-- name: Enabling parameters in SSH service as CLIENT
-  become: true
+- name: Enable parameters in SSH service as CLIENT
+  with_items:
+  - { key: '^# Host', value: 'Host *' }
+  - { key: '^ *ServerAliveInterval', value: '  ServerAliveInterval 20' }
+  - { key: '^ *ServerAliveCountMax', value: '  ServerAliveCountMax 360' }
+  - { key: '^ *PasswordAuthentication', value: '  PasswordAuthentication no' }
+  - { key: '^ *PubkeyAuthentication', value: '  PubkeyAuthentication yes' }
   ansible.builtin.lineinfile:
     path: "/etc/ssh/ssh_config"
     regexp: '{{ item.key }}'
     line: '{{ item.value }}'
-  with_items:
-  - {key: '^# Host', value: 'Host *'}
-  - {key: '^ *ServerAliveInterval', value: '  ServerAliveInterval 20'}
-  - {key: '^ *ServerAliveCountMax', value: '  ServerAliveCountMax 360'}
-  - {key: '^ *PasswordAuthentication', value: '  PasswordAuthentication no'}
-  - {key: '^ *PubkeyAuthentication', value: '  PubkeyAuthentication yes',}
 
 - name: Enabling parameters in SSH service as SERVER
-  become: true
   block:
-  - name: Set parameters values
+  - name: Enable parameters in SSH service as SERVER
+    with_items:
+    - { key: '^ClientAliveInterval', value: 'ClientAliveInterval 20' }
+    - { key: '^ClientAliveCountMax', value: 'ClientAliveCountMax 360' }
+    - { key: '^PasswordAuthentication', value: 'PasswordAuthentication no' }
+    - { key: '^PubkeyAuthentication', value: 'PubkeyAuthentication yes' }
     ansible.builtin.lineinfile:
       path: "/etc/ssh/sshd_config"
       regexp: '{{ item.key }}'
       line: '{{ item.value }}'
       validate: sshd -t -f %s
-    with_items:
-    - {key: '^ClientAliveInterval', value: 'ClientAliveInterval 20'}
-    - {key: '^ClientAliveCountMax', value: 'ClientAliveCountMax 360'}
-    - {key: '^PasswordAuthentication', value: 'PasswordAuthentication no'}
-    - {key: '^PubkeyAuthentication', value: 'PubkeyAuthentication yes'}
+
   always:
   - name: Restart SSH service
     ansible.builtin.systemd_service:
@@ -74,28 +38,11 @@
       enabled: true
 
 - name: Configuring network service
-  become: true
   block:
-  - name: Get regex pattern for local IP
-    ansible.builtin.set_fact:
-      # pattern: "[1-9]+.[1-9]+.[1-9]+.[1-9]+ {{ ansible_nodename }}"
-      pattern: "(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?) {{ ansible_nodename }}"
-
-  - name: Show pattern
-    ansible.builtin.debug:
-      msg: "{{ pattern }}"
-
-  - name: Set hostname with private IP in /etc/hosts
+  - name: Set hostname in /etc/hostname
     ansible.builtin.lineinfile:
-      path: "/etc/hosts"
-      regexp: '^.*{{ ansible_nodename }}'
-      line: "{{ lookup('file', '{{ MISC_PATH }}/hosts') | regex_search(pattern) }} {{ ansible_nodename }}.local"
-
-  # - name: Set hostname with private IP in /etc/hosts
-  #   ansible.builtin.replace:
-  #     path: "/etc/hosts"
-  #     regexp: '^.*{{ ansible_nodename }}.*'
-  #     replace: '{{ ansible_eth1.ipv4.address}}\t{{ ansible_nodename }} {{ ansible_nodename }}.local'
+      path: "/etc/hostname"
+      line: "{{ ansible_nodename }}"
 
   - name: Set Google DNS servers
     ansible.builtin.blockinfile:
@@ -106,17 +53,18 @@
         servers=8.8.8.8, 8.8.4.4
 
   - name: Disable IPv6 and enable IPv4 forwarding with sysctl
+    with_items:
+    - "net.ipv6.conf.all.disable_ipv6"
+    - "net.ipv6.conf.default.disable_ipv6"
+    - "net.ipv6.conf.lo.disable_ipv6"
+    - "net.ipv4.ip_forward"
     ansible.posix.sysctl:
       name: "{{ item }}"
       value: '1'
       state: present
       sysctl_set: true
       reload: true
-    with_items:
-    - "net.ipv6.conf.all.disable_ipv6"
-    - "net.ipv6.conf.default.disable_ipv6"
-    - "net.ipv6.conf.lo.disable_ipv6"
-    - "net.ipv4.ip_forward"
+
   always:
   - name: Restart NetworkManager service
     ansible.builtin.systemd_service:
@@ -125,25 +73,17 @@
       enabled: true
 
 - name: Disable firewalld service
-  become: true
   ansible.builtin.systemd_service:
     name: firewalld
     state: stopped
     enabled: false
 
 - name: Disable SElinux
-  become: true
+  register: reboot_required
   ansible.posix.selinux:
     state: disabled
-  register: reboot_required
 
 - name: Reboot the VM
-  become: true
-  ansible.builtin.reboot:
   when: reboot_required.reboot_required
   ignore_errors: true
-
-# - name: Debug. Show hostvars.inventory_hostname
-#   ansible.builtin.debug:
-#     var: hostvars[inventory_hostname]
-
+  ansible.builtin.reboot:

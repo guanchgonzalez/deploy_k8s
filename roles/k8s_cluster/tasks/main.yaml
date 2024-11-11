@@ -4,58 +4,53 @@
 # Target hosts: master, worker
 #
 
-
 - name: Disabling swap on every node
-  become: true
   block:
-  - name: Disable swap right now
-    ansible.builtin.command: swapoff -a
-
   - name: Disable swap permanently
+    with_items:
+    - swap
+    - none
     ansible.posix.mount:
       path: "{{ item }}"
       fstype: swap
       state: absent
-    with_items:
-    - swap
-    - none
+
+  - name: Disable swap right now
+    when: ansible_swaptotal_mb > 0
+    ansible.builtin.command: swapoff -a
 
 - name: Remove old packages versions
-  become: true
   ansible.builtin.dnf:
-    name: "{{ item }}"
     state: absent
-  with_items:
-  - docker
-  - docker-ce
-  - docker-ce-cli
-  - docker-client
-  - docker-client-latest
-  - docker-common
-  - docker-latest
-  - docker-latest-logrotate
-  - docker-logrotate
-  - docker-engine
-  - podman
-  - runc
-  - containerd.io
-  - kubelet
-  - kubeadm
-  - kubectl
-  - kubernetes-cni
+    name:
+    - docker
+    - docker-ce
+    - docker-ce-cli
+    - docker-client
+    - docker-client-latest
+    - docker-common
+    - docker-latest
+    - docker-latest-logrotate
+    - docker-logrotate
+    - docker-engine
+    - podman
+    - runc
+    - containerd.io
+    - kubelet
+    - kubeadm
+    - kubectl
+    - kubernetes-cni
 
 - name: Including and enabling Docker repo by commands
-  become: true
   block:
   - name: Include Docker repo
-    ansible.builtin.command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    ansible.builtin.command: dnf config-manager --add-repo
+      https://download.docker.com/linux/centos/docker-ce.repo
 
   - name: Enable Docker repo
-    become: true
     ansible.builtin.command: dnf config-manager --enable docker-ce-stable
 
 - name: Include Kubernetes repo
-  become: true
   ansible.builtin.yum_repository:
     name: "kubernetes"
     description: "Kubernetes stable v1.31"
@@ -66,16 +61,23 @@
     # exclude: ["kubelet", "kubeadm", "kubectl", "tools", "kubernetes-cni"]
     state: present
 
-- name: Install cluster services
-  ansible.builtin.include_role:
-    name: packages
-    apply: {"become": true}
-  vars:
-    packages:
-    - pkg: docker-ce
-    - pkg: docker-ce-cli
-    - pkg: containerd.io
-    - pkg: kubelet
-    - pkg: kubeadm
-    - pkg: kubectl
+- name: Update all OS packages
+  ansible.builtin.dnf:
+    name: '*'
+    state: latest
+    update_cache: true
 
+- name: Install cluster services
+  ansible.builtin.dnf:
+    state: latest
+    name:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: DNF autoremove
+  ansible.builtin.dnf:
+    autoremove: true
