@@ -17,5 +17,5 @@ Session.vim
 *.tar
 *.json
 .vagrant
-vault_pass
 site.yaml
+env_vars

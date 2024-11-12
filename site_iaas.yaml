@@ -5,15 +5,24 @@
 - hosts: iaas
   vars:
     ansible_connection: local
+    iaas_info: "{{ lookup('ansible.builtin.ini', 'IAAS type=properties file=' +
+      ENV_FILE) | split(' ') }}"
+    VM_PREFIX: "{{ iaas_info.0 | regex_replace('\"', '') }}"
+    DOMAIN: "{{ iaas_info.1 | regex_replace('\"', '') }}"
+    # DEF_ADMIN_PASS: "{{ def_admin_pass }}"
+    # NEW_ADMIN_PASS: "{{ new_admin_pass }}"
+  vars_files:
+  - env_vars/vault.yaml
   gather_facts: true
   roles:
   - role: iter_iaas
 
-- hosts: iaas
-  gather_facts: false
-  remote_user: "{{ def_user }}"
-  roles:
-  - role: mgmt_user
+# - hosts: iaas
+#   gather_facts: false
+#   remote_user: "{{ def_user }}"
+#   roles:
+#   - role: mgmt_user
+# 
+# - import_playbook: "site_common.yaml"
+#   when: inventory_hostname in groups['iaas']
 
-- import_playbook: "site_common.yaml"
-  when: inventory_hostname in groups['iaas']
