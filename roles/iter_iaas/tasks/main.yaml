@@ -1,23 +1,31 @@
 #
 #   ITER OpenNebula deployment tasks
 #
-# Target hosts: masters, workers, &iaas (but local connection by default)
+# Target hosts: iaas (but local connection by default)
 #
 
 - name: Get env vars
+  run_once: true
   block:
   - name: Get IAAS var from env file
     ansible.builtin.set_fact:
       iaas_info: "{{ lookup('ansible.builtin.ini', 'IAAS type=properties file=' +
         ENV_FILE) | split(' ') }}"
 
-  - name: Get nodename parameters
+  - name: Get encripted variables
+    ansible.builtin.include_vars:
+      file: "vault.yaml"
+
+  - name: Get nodename and user parameters
     ansible.builtin.set_fact:
       cacheable: true
-      VM_PREFIX: "{{ iaas_info.0 }}"
-      DOMAIN: "{{ iaas_info.1 }}"
+      VM_PREFIX: "{{ iaas_info.0 | regex_replace('\"', '') }}"
+      DOMAIN: "{{ iaas_info.1 | regex_replace('\"', '') }}"
+      DEF_ADMIN_PASS: "{{ def_admin_pass }}"
+      NEW_ADMIN_PASS: "{{ new_admin_pass }}"
 
 - name: Create deployment dirs
+  run_once: true
   ansible.builtin.file:
     path: "{{ MISC_PATH }}"
     state: "directory"
@@ -47,10 +55,10 @@
   register: result
   changed_when: result.rc == 0
   ignore_errors: true
-  no_log: true
+  # no_log: true
   ansible.builtin.expect:
     timeout: 5
-    command: "ssh -o StrictHostKeychecking=no {{ DEF_USER }}@{{ inventory_hostname }}"
+    command: "ssh -o StrictHostKeychecking=no {{ def_user }}@{{ inventory_hostname }}"
     responses:
       ".*password: ":
       - "{{ DEF_ADMIN_PASS }}"
@@ -64,7 +72,7 @@
   vars:
     ansible_connection: ssh
     ansible_ssh_pass: "{{ NEW_ADMIN_PASS }}"
-  remote_user: "{{ DEF_USER }}"
+  remote_user: "{{ def_user }}"
   when: result.changed
   block:
   - name: Set Public key for default VMs user after the first login
@@ -92,7 +100,7 @@
     ansible_connection: ssh
     ansible_become_pass: "{{ NEW_ADMIN_PASS }}"
   become: true
-  remote_user: "{{ DEF_USER }}"
+  remote_user: "{{ def_user }}"
   when: result.changed
   ansible.builtin.lineinfile:
     regexp: '^# %wheel'
@@ -103,7 +111,7 @@
 - name: Remove previous known_hosts entries in every VM
   vars:
     ansible_connection: ssh
-  remote_user: "{{ DEF_USER }}"
+  remote_user: "{{ def_user }}"
   ansible.builtin.lineinfile:
     create: true
     path: "~/.ssh/known_hosts"
@@ -114,7 +122,7 @@
   vars:
     ansible_connection: ssh
   become: true
-  remote_user: "{{ DEF_USER }}"
+  remote_user: "{{ def_user }}"
   block:
   - name: Remove previous hosts entries in every VM
     ansible.builtin.lineinfile:
@@ -125,5 +133,7 @@
   - name: Insert new hosts entries in every VM
     ansible.builtin.blockinfile:
       path: "/etc/hosts"
-      block: "{{ lookup('ansible.builtin.file', '/etc/hosts') | regex_findall('^.*' + DOMAIN + '$', multiline=true) | join('\n') }}"
+      block: "{{ lookup('ansible.builtin.file', '/etc/hosts') | regex_findall('^.*' +
+        DOMAIN + '$', multiline=true) | join('
 
+        ') }}"

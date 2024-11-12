@@ -19,6 +19,7 @@ iaas_user = os.getenv('IAAS_USER')
 iaas_pass = os.getenv('IAAS_PASS')
 masters_cpu = int(os.getenv('MASTERS_CPU'))
 masters_mem = int(os.getenv('MASTERS_MEM'))
+default_user = os.getenv('DEFAULT_USER')
 
 # Meta (hostvars) group
 nodes['_meta'] = {}
@@ -89,7 +90,7 @@ for g in vars.keys():
         nodes['workers']['hosts'].append(nodename)
         nodes[g]['hosts'].append(nodename)
 
-# Set IPs for OpenNebula nodes in _meta hostvars group
+# Set IPs and other variables for OpenNebula nodes in _meta hostvars group
 m = w = 0
 for id in sorted(one_vms):
     if m < vars['iaas'][2] and one_vms[id]['cpu'] == masters_cpu and one_vms[id]['mem'] == masters_mem:
@@ -97,6 +98,7 @@ for id in sorted(one_vms):
         hostvars[h] = {}
         hostvars[h]['one_name'] = one_vms[id]['one_name']
         hostvars[h]['ansible_host'] = one_vms[id]['ip']
+        hostvars[h]['def_user'] = default_user
         m += 1
     else:
         if w < vars['iaas'][3]:
@@ -104,7 +106,9 @@ for id in sorted(one_vms):
             hostvars[h] = {}
             hostvars[h]['one_name'] = one_vms[id]['one_name']
             hostvars[h]['ansible_host'] = one_vms[id]['ip']
+            hostvars[h]['def_user'] = default_user
             w += 1
 nodes['_meta']['hostvars'] = hostvars
 
 print(json.dumps(nodes))
+

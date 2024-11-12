@@ -1,7 +1,0 @@
-#
-#   ITER IaaS role vars
-#
-
-DEF_USER: "administrador"
-DEF_ADMIN_PASS: "changeme"
-NEW_ADMIN_PASS: "p4S5#0_D"
