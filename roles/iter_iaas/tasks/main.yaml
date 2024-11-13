@@ -4,11 +4,17 @@
 # Target hosts: iaas (but local connection by default)
 #
 
-- name: Remove previous known_hosts entries in controller node
+- name: Remove previous known_hosts entries in controller node by hostname
   run_once: true
   ansible.builtin.lineinfile:
     path: "~/.ssh/known_hosts"
     regexp: '^.*{{ domain }}.*$'
+    state: absent
+
+- name: Remove previous known_hosts entries in controller node by IP
+  ansible.builtin.lineinfile:
+    path: "~/.ssh/known_hosts"
+    regexp: '^.*{{ ansible_host }}.*$'
     state: absent
 
 - name: Remove previous hosts entries in controller node
@@ -109,4 +115,10 @@
       path: "/etc/hosts"
       block: "{{ lookup('ansible.builtin.file', '/etc/hosts') | regex_findall('^.*' +
         domain + '$', multiline=true) | join('\n') }}"
+
+- name: Remove again previous known_hosts entries in controller node by IP
+  ansible.builtin.lineinfile:
+    path: "~/.ssh/known_hosts"
+    regexp: '^.*{{ ansible_host }}.*$'
+    state: absent
 

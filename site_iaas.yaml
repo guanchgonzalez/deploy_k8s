@@ -22,4 +22,3 @@
 
 - import_playbook: "site_common.yaml"
   when: inventory_hostname in groups['iaas']
-
