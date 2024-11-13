@@ -6,12 +6,12 @@
 
 
 - name: Create deployment dirs
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: "directory"
   with_items:
   - "{{ VAGRANT_ENV_HOME }}"
   - "{{ MISC_PATH }}"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
 
 - name: Destroy previous VM's
   ansible.builtin.command:
@@ -37,6 +37,7 @@
     ansible.builtin.command:
       cmd: "vagrant box list | grep '{{ VAGRANT_BOX }}'"
       chdir: "{{ VAGRANT_ENV_HOME }}"
+
   rescue:
   - name: Download the box image
     ansible.builtin.command:
@@ -56,16 +57,16 @@
       state: touch
 
   - name: Insert master entries into hosts file
+    loop: "{{ range(1, MASTER_NODES + 1) | list }}"
     ansible.builtin.lineinfile:
       path: "{{ MISC_PATH }}/hosts"
       line: "{{ SUBNET }}{{ MASTERS_IP_BASE + item }} {{ VM_PREFIX }}master{{ ( item < 10 ) | ternary('0', '') }}{{ item }}.{{ DOMAIN }}"
-    loop: "{{ range(1, MASTER_NODES + 1) | list }}"
 
   - name: Insert worker entries into hosts file
+    loop: "{{ range(1, WORKER_NODES + 1) | list }}
     ansible.builtin.lineinfile:
       path: "{{ MISC_PATH }}/hosts"
       line: "{{ SUBNET }}{{ WORKERS_IP_BASE + item }} {{ VM_PREFIX }}node{{ ( item < 10 ) | ternary('0', '') }}{{ item }}.{{ DOMAIN }}"
-    loop: "{{ range(1, WORKER_NODES + 1) | list }}"
 
 - name: Remove previous known_hosts entries
   ansible.builtin.lineinfile:

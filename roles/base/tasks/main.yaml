@@ -7,8 +7,8 @@
 - name: Enable parameters in SSH service as CLIENT
   with_items:
   - { key: '^# Host', value: 'Host *' }
-  - { key: '^ *ServerAliveInterval', value: '  ServerAliveInterval 20' }
-  - { key: '^ *ServerAliveCountMax', value: '  ServerAliveCountMax 360' }
+  - { key: '^ *ServerAliveInterval', value: '  ServerAliveInterval 360' }
+  - { key: '^ *ServerAliveCountMax', value: '  ServerAliveCountMax 5' }
   - { key: '^ *PasswordAuthentication', value: '  PasswordAuthentication no' }
   - { key: '^ *PubkeyAuthentication', value: '  PubkeyAuthentication yes' }
   ansible.builtin.lineinfile:
@@ -20,8 +20,9 @@
   block:
   - name: Enable parameters in SSH service as SERVER
     with_items:
-    - { key: '^ClientAliveInterval', value: 'ClientAliveInterval 20' }
-    - { key: '^ClientAliveCountMax', value: 'ClientAliveCountMax 360' }
+    - { key: '^MaxAuthTries', value: 'MaxAuthTries 3' }
+    - { key: '^ClientAliveInterval', value: 'ClientAliveInterval 360' }
+    - { key: '^ClientAliveCountMax', value: 'ClientAliveCountMax 5' }
     - { key: '^PasswordAuthentication', value: 'PasswordAuthentication no' }
     - { key: '^PubkeyAuthentication', value: 'PubkeyAuthentication yes' }
     ansible.builtin.lineinfile:
@@ -87,3 +88,5 @@
   when: reboot_required.reboot_required
   ignore_errors: true
   ansible.builtin.reboot:
+
+

@@ -7,7 +7,7 @@
   roles:
   - role: vagrant
 
-- hosts: masters, workers, &vagrant
+- hosts: vagrant
   gather_facts: false
   remote_user: vagrant
   roles:

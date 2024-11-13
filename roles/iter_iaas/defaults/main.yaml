@@ -1,0 +1,11 @@
+#
+#    ITER OpenNebula role defaults
+#
+
+
+iaas_info: "vmprefix vmdomain"
+domain: "vmdomain"
+def_user: "defuser"
+def_admin_pass: "oldpass"
+new_admin_pass: "newpass"
+

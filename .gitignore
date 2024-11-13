@@ -17,5 +17,6 @@ Session.vim
 *.tar
 *.json
 .vagrant
+cache*
 site.yaml
 env_vars
