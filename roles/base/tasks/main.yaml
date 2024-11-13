@@ -48,7 +48,7 @@
   - name: Set Google DNS servers
     ansible.builtin.blockinfile:
       path: "/etc/NetworkManager/NetworkManager.conf"
-      prepend_newline: true
+      # prepend_newline: true
       block: |
         [global-dns-domain-*]
         servers=8.8.8.8, 8.8.4.4

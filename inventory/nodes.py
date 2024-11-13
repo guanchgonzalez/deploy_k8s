@@ -19,7 +19,7 @@ iaas_user = os.getenv('IAAS_USER')
 iaas_pass = os.getenv('IAAS_PASS')
 masters_cpu = int(os.getenv('MASTERS_CPU'))
 masters_mem = int(os.getenv('MASTERS_MEM'))
-default_user = os.getenv('DEFAULT_USER')
+default_user = os.getenv('DEF_USER')
 
 # Meta (hostvars) group
 nodes['_meta'] = {}

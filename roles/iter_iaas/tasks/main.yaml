@@ -68,12 +68,16 @@
         - ""
         - ""
 
-  - name: Copy controller user pub key as authorized key after the first login
-    ansible.builtin.lineinfile:
-      create: true
-      line: "{{ lookup('ansible.builtin.file', '~/.ssh/id_ed25519.pub') }}"
-      path: "~/.ssh/authorized_keys"
-      mode: "0600"
+- name: Copy controller user pub key as authorized key after the first login
+  vars:
+    ansible_connection: ssh
+    ansible_ssh_pass: "{{ new_admin_pass }}"
+  remote_user: "{{ def_user }}"
+  ansible.builtin.lineinfile:
+    create: true
+    line: "{{ lookup('ansible.builtin.file', '~/.ssh/id_ed25519.pub') }}"
+    path: "~/.ssh/authorized_keys"
+    mode: "0600"
 
 - name: Enable NOPASSWD for wheel group users in every VM
   vars:
