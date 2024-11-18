@@ -61,12 +61,6 @@
     # exclude: ["kubelet", "kubeadm", "kubectl", "tools", "kubernetes-cni"]
     state: present
 
-- name: Update all OS packages
-  ansible.builtin.dnf:
-    name: '*'
-    state: latest
-    update_cache: true
-
 - name: Install cluster services
   ansible.builtin.dnf:
     state: latest
@@ -76,9 +70,5 @@
     - containerd.io
     - kubelet
     - kubeadm
-    - kubectl
-
-- name: DNF autoremove
-  ansible.builtin.dnf:
-    autoremove: true
+    # - kubectl
 

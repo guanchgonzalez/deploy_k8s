@@ -16,6 +16,7 @@ Session.vim
 *.gz
 *.tar
 *.json
+k8senv
 .vagrant
 cache*
 site.yaml

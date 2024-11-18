@@ -79,6 +79,16 @@
     state: stopped
     enabled: false
 
+- name: Update all OS packages
+  ansible.builtin.dnf:
+    name: '*'
+    state: latest
+    update_cache: true
+
+- name: DNF autoremove
+  ansible.builtin.dnf:
+    autoremove: true
+
 - name: Disable SElinux
   register: reboot_required
   ansible.posix.selinux:
