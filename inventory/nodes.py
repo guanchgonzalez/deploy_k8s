@@ -33,7 +33,7 @@ nodes['local']['hosts'] = []
 nodes['local']['hosts'].append('localhost')
 nodes['local']['vars'] = { 'ansible_connection': 'local', 'ansible_python_interpreter': '/usr/bin/python' }
 
-# Prpxies group
+# Proxies group
 nodes['proxies'] = {}
 nodes['proxies']['hosts'] = []
 
